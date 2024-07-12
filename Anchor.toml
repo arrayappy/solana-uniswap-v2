@@ -5,7 +5,7 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-solana_uniswap_v2 = "4LmrjU56UvHCMqKscEGgvqDhGcm32KnRjkPcsV7BYJM5"
+solana_uniswap_v2 = "uni89rwTPZo2AV5jWCv5Jx4GNDWAqc54BePQKcttmUa"
 
 [registry]
 url = "https://api.apr.dev"
