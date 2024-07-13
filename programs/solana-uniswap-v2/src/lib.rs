@@ -17,6 +17,11 @@ pub mod solana_uniswap_v2 {
         ctx.accounts.initialize_amm(id, fee)?;
         Ok(())
     }
+
+    pub fn initialize_pool(ctx: Context<InitializePool>) -> Result<()> {
+        ctx.accounts.initialize_pool()
+    }
+
 }
 
 #[derive(Accounts)]

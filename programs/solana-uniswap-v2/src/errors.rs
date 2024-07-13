@@ -3,5 +3,8 @@ use anchor_lang::prelude::*;
 #[error_code]
 pub enum CustomError {
     #[msg("Invalid fee amount")]
-    InvalidFee
+    InvalidFee,
+
+    #[msg("Invalid token mint is provided for the pool")]
+    InvalidTokenMint,
 }
