@@ -1,152 +1,86 @@
 import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
-import { PublicKey, Keypair } from "@solana/web3.js";
-import { createMint, getAssociatedTokenAddressSync } from "@solana/spl-token";
+import { PublicKey } from "@solana/web3.js";
 import { SolanaUniswapV2 } from "../target/types/solana_uniswap_v2";
-import { expect } from "chai";
-import { expectRevert } from "./utils";
+import { TestData, createTestData, expectRevert, mintingTokens } from "./utils";
 
-describe("amm-tutorial", () => {
+describe("Initialize pool", () => {
   const provider = anchor.AnchorProvider.env();
   const connection = provider.connection;
   anchor.setProvider(provider);
 
   const program = anchor.workspace.SolanaUniswapV2 as Program<SolanaUniswapV2>;
 
-  let id: PublicKey;
-  let fee: number;
-  let admin: Keypair;
-  let mintAKeypair: Keypair;
-  let mintBKeypair: Keypair;
-  let ammKey: PublicKey;
-  let poolKey: PublicKey;
-  let poolAuthority: PublicKey;
+  let values: TestData;
 
-  const mintingTokens = async () => {
-    // Mint tokens
-    await connection.confirmTransaction(
-      await connection.requestAirdrop(admin.publicKey, 10 ** 10)
-    );
-    await createMint(
-      connection,
-      admin,
-      admin.publicKey,
-      admin.publicKey,
-      6,
-      mintAKeypair
-    );
-    await createMint(
-      connection,
-      admin,
-      admin.publicKey,
-      admin.publicKey,
-      6,
-      mintBKeypair
-    );
-  };
+  beforeEach(async () => {
+    values = createTestData();
 
-  describe("Initialize pool", () => {
-    beforeEach(async () => {
-      id = Keypair.generate().publicKey;
-      fee = 500;
-      admin = Keypair.generate();
-      ammKey = PublicKey.findProgramAddressSync(
-        [id.toBuffer()],
-        program.programId
-      )[0];
-      mintAKeypair = Keypair.generate();
-      mintBKeypair = Keypair.generate();
-      poolKey = PublicKey.findProgramAddressSync(
+    await program.methods
+      .initializeAmm(values.id, values.fee)
+      .accounts({ amm: values.ammKey, admin: values.admin.publicKey })
+      .rpc();
+
+    await mintingTokens({
+      connection,
+      creator: values.admin,
+      mintAKeypair: values.mintAKeypair,
+      mintBKeypair: values.mintBKeypair,
+    });
+  });
+
+  it("Initializing pool", async () => {
+    await program.methods
+      .initializePool()
+      .accounts({
+        amm: values.ammKey,
+        pool: values.poolKey,
+        poolAuthority: values.poolAuthority,
+        mintLiquidity: values.mintLiquidity,
+        mintA: values.mintAKeypair.publicKey,
+        mintB: values.mintBKeypair.publicKey,
+        poolAccountA: values.poolAccountA,
+        poolAccountB: values.poolAccountB,
+      })
+      .rpc({ skipPreflight: true });
+  });
+
+  it("Invalid mints", async () => {
+    values = createTestData({
+      mintBKeypair: values.mintAKeypair,
+      poolKey: PublicKey.findProgramAddressSync(
         [
-          id.toBuffer(),
-          mintAKeypair.publicKey.toBuffer(),
-          mintBKeypair.publicKey.toBuffer(),
+          values.id.toBuffer(),
+          values.mintAKeypair.publicKey.toBuffer(),
+          values.mintBKeypair.publicKey.toBuffer(),
         ],
         program.programId
-      )[0];
-      poolAuthority = PublicKey.findProgramAddressSync(
+      )[0],
+      poolAuthority: PublicKey.findProgramAddressSync(
         [
-          id.toBuffer(),
-          mintAKeypair.publicKey.toBuffer(),
-          mintBKeypair.publicKey.toBuffer(),
+          values.id.toBuffer(),
+          values.mintAKeypair.publicKey.toBuffer(),
+          values.mintBKeypair.publicKey.toBuffer(),
           Buffer.from("authority"),
         ],
         program.programId
-      )[0];
-
-      await program.methods
-        .createAmm(id, fee)
-        .accounts({ amm: ammKey, admin: admin.publicKey })
-        .rpc();
-
-      await mintingTokens();
+      )[0],
     });
 
-    it("Initializing pool", async () => {
-      await program.methods
+    await expectRevert(
+      program.methods
         .initializePool()
         .accounts({
-          amm: ammKey,
-          pool: poolKey,
-          poolAuthority,
-          mintA: mintAKeypair.publicKey,
-          mintB: mintBKeypair.publicKey,
-          poolAccountA: getAssociatedTokenAddressSync(
-            mintAKeypair.publicKey,
-            poolAuthority,
-            true
-          ),
-          poolAccountB: getAssociatedTokenAddressSync(
-            mintBKeypair.publicKey,
-            poolAuthority,
-            true
-          ),
+          amm: values.ammKey,
+          pool: values.poolKey,
+          poolAuthority: values.poolAuthority,
+          mintLiquidity: values.mintLiquidity,
+          mintA: values.mintAKeypair.publicKey,
+          mintB: values.mintBKeypair.publicKey,
+          poolAccountA: values.poolAccountA,
+          poolAccountB: values.poolAccountB,
         })
-        .rpc();
-    });
-
-    it("Invalid mints", async () => {
-      mintBKeypair = mintAKeypair;
-      poolKey = PublicKey.findProgramAddressSync(
-        [
-          id.toBuffer(),
-          mintAKeypair.publicKey.toBuffer(),
-          mintBKeypair.publicKey.toBuffer(),
-        ],
-        program.programId
-      )[0];
-      poolAuthority = PublicKey.findProgramAddressSync(
-        [
-          id.toBuffer(),
-          mintAKeypair.publicKey.toBuffer(),
-          mintBKeypair.publicKey.toBuffer(),
-          Buffer.from("authority"),
-        ],
-        program.programId
-      )[0];
-
-      await expectRevert(
-        program.methods
-          .initializePool()
-          .accounts({
-            amm: ammKey,
-            pool: poolKey,
-            poolAuthority,
-            mintA: mintAKeypair.publicKey,
-            mintB: mintBKeypair.publicKey,
-            poolAccountA: getAssociatedTokenAddressSync(
-              mintAKeypair.publicKey,
-              poolAuthority,
-              true
-            ),
-            poolAccountB: getAssociatedTokenAddressSync(
-              mintBKeypair.publicKey,
-              poolAuthority,
-              true
-            ),
-          })
-          .rpc()
-      );
-    });
+        .rpc()
+    );
   });
 });

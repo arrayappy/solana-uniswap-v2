@@ -1,70 +1,58 @@
-import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@coral-xyz/anchor";
-import { PublicKey, Keypair } from "@solana/web3.js";
+import * as anchor from "@project-serum/anchor";
+import { Program } from "@project-serum/anchor";
 import { SolanaUniswapV2 } from "../target/types/solana_uniswap_v2";
 import { expect } from "chai";
-import { expectRevert } from "./utils";
+import { TestData, createTestData, expectRevert } from "./utils";
 
-describe("solana-uniswap-v2", () => {
+describe("Initialize AMM", () => {
   const provider = anchor.AnchorProvider.env();
   const connection = provider.connection;
   anchor.setProvider(provider);
 
-
   const program = anchor.workspace.SolanaUniswapV2 as Program<SolanaUniswapV2>;
 
-  describe("Initalize AMM", () => {
-    let id: PublicKey;
-    let fee: number;
-    let admin: Keypair;
+  let values: TestData;
 
-    before(() => {
-      id = Keypair.generate().publicKey;
-      fee = 500;
-      admin = Keypair.generate();
-    });
+  beforeEach(() => {
+    values = createTestData();
+  });
 
-    it("Airdropping tokens to auth and payer", async () => {
-      const tx_maker = await provider.connection.requestAirdrop(
-        admin.publicKey,
-        anchor.web3.LAMPORTS_PER_SOL * 10
-      );
-      await provider.connection.confirmTransaction(tx_maker);
-      const tx_taker = await provider.connection.requestAirdrop(
-        id,
-        anchor.web3.LAMPORTS_PER_SOL * 10
-      );
-      await provider.connection.confirmTransaction(tx_taker);
-    });
+  //Airdrop tokens to both accounts
+  it("Airdrop tokens to auth and payer", async () => {
+    const tx_maker = await provider.connection.requestAirdrop(
+      values.admin.publicKey,
+      anchor.web3.LAMPORTS_PER_SOL * 10
+    );
+    await provider.connection.confirmTransaction(tx_maker);
+    const tx_taker = await provider.connection.requestAirdrop(
+      values.ammKey,
+      anchor.web3.LAMPORTS_PER_SOL * 10
+    );
+    await provider.connection.confirmTransaction(tx_taker);
+  });
 
-    it("Initalizing AMM", async () => {
-      const ammKey = PublicKey.findProgramAddressSync(
-        [id.toBuffer()],
-        program.programId
-      )[0];
-      await program.methods
-        .initializeAmm(id, fee)
-        .accounts({ amm: ammKey, admin: admin.publicKey })
-        .rpc();
+  it("Initializing AMM", async () => {
+    await program.methods
+      .initializeAmm(values.id, values.fee)
+      .accounts({ amm: values.ammKey, admin: values.admin.publicKey })
+      .rpc({ skipPreflight: true });
 
-      const ammAccount = await program.account.amm.fetch(ammKey);
-      expect(ammAccount.id.toString()).to.equal(id.toString());
-      expect(ammAccount.admin.toString()).to.equal(admin.publicKey.toString());
-      expect(ammAccount.fee.toString()).to.equal(fee.toString());
-    });
+    const ammAccount = await program.account.amm.fetch(values.ammKey);
+    expect(ammAccount.id.toString()).to.equal(values.id.toString());
+    expect(ammAccount.admin.toString()).to.equal(
+      values.admin.publicKey.toString()
+    );
+    expect(ammAccount.fee.toString()).to.equal(values.fee.toString());
+  });
 
-    it("Invalid fee amount", async () => {
-      fee = 10000;
-      const ammKey = PublicKey.findProgramAddressSync(
-        [id.toBuffer()],
-        program.programId
-      )[0];
-      await expectRevert(
-        program.methods
-          .createAmm(id, fee)
-          .accounts({ amm: ammKey, admin: admin.publicKey })
-          .rpc()
-      );
-    });
+  it("Invalid fee amount", async () => {
+    values.fee = 10000;
+
+    await expectRevert(
+      program.methods
+        .initializeAmm(values.id, values.fee)
+        .accounts({ amm: values.ammKey, admin: values.admin.publicKey })
+        .rpc({ skipPreflight: true })
+    );
   });
 });
