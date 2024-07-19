@@ -64,7 +64,7 @@ impl<'info> DepositLiquidity<'info> {
 
         // Calculate liquidity tokens to be deposited
         let mut liquidity = I64F64::from_num(amount_a)
-            .checked_add(I64F64::from_num(amount_b))
+            .checked_mul(I64F64::from_num(amount_b))
             .unwrap()
             .sqrt()
             .to_num::<u64>();
