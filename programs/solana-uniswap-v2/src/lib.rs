@@ -22,6 +22,14 @@ pub mod solana_uniswap_v2 {
         ctx.accounts.initialize_pool()
     }
 
+    pub fn deposit_liquidity(
+        ctx: Context<DepositLiquidity>,
+        amount_a: u64,
+        amount_b: u64,
+    ) -> Result<()> {
+        ctx.accounts
+            .deposit_liquidity(amount_a, amount_b, &ctx.bumps)
+    }
 }
 
 #[derive(Accounts)]

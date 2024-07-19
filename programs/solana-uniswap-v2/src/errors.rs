@@ -7,4 +7,7 @@ pub enum CustomError {
 
     #[msg("Invalid token mint is provided for the pool")]
     InvalidTokenMint,
+
+    #[msg("Deposit amount is below the minimum required liquidity")]
+    InsufficientDepositAmount,
 }
