@@ -19,8 +19,17 @@ impl<'info> DepositLiquidity<'info> {
         amount_b: u64,
         bumps: &DepositLiquidityBumps,
     ) -> Result<()> {
-        let mut amount_a = amount_a;
-        let mut amount_b = amount_b;
+        // Ensure owned assets are only being deposited
+        let mut amount_a = if amount_a > self.depositor_account_a.amount {
+            self.depositor_account_a.amount
+        } else {
+            amount_a
+        };
+        let mut amount_b = if amount_b > self.depositor_account_b.amount {
+            self.depositor_account_b.amount
+        } else {
+            amount_b
+        };
 
         // Ensure deposit ratio with existing pool liquidity
         let pool_a = &self.pool_account_a;
