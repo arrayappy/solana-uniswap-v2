@@ -80,4 +80,29 @@ describe("Deposit liquidity", () => {
       values.defaultSupply.sub(values.depositAmountA).toString()
     );
   });
+
+  it("Should fail to deposit with different amounts", async () => {
+    const amountA = new anchor.BN(100);
+    const amountB = new anchor.BN(200);
+
+    await expectRevert(
+      program.methods
+        .depositLiquidity(amountA, amountB)
+        .accounts({
+          pool: values.poolKey,
+          poolAuthority: values.poolAuthority,
+          depositor: values.admin.publicKey,
+          mintLiquidity: values.mintLiquidity,
+          mintA: values.mintAKeypair.publicKey,
+          mintB: values.mintBKeypair.publicKey,
+          poolAccountA: values.poolAccountA,
+          poolAccountB: values.poolAccountB,
+          depositorAccountLiquidity: values.liquidityAccount,
+          depositorAccountA: values.holderAccountA,
+          depositorAccountB: values.holderAccountB,
+        })
+        .signers([values.admin])
+        .rpc({ skipPreflight: true })
+    );
+  });
 });
