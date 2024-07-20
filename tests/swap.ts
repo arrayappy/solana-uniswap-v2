@@ -97,4 +97,27 @@ describe("Swap tokens", () => {
       values.defaultSupply.sub(values.depositAmountB).add(input).toNumber()
     );
   });
+
+  it("Should fail to swap with insufficient balance", async () => {
+    const excessiveInput = values.defaultSupply.add(new BN(1));
+
+    await expectRevert(
+      program.methods
+        .swap(true, excessiveInput, new BN(100))
+        .accounts({
+          amm: values.ammKey,
+          pool: values.poolKey,
+          poolAuthority: values.poolAuthority,
+          trader: values.admin.publicKey,
+          mintA: values.mintAKeypair.publicKey,
+          mintB: values.mintBKeypair.publicKey,
+          poolAccountA: values.poolAccountA,
+          poolAccountB: values.poolAccountB,
+          traderAccountA: values.holderAccountA,
+          traderAccountB: values.holderAccountB,
+        })
+        .signers([values.admin])
+        .rpc({ skipPreflight: true })
+    );
+  });
 });
