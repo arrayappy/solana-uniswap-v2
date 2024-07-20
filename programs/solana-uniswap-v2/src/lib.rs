@@ -43,6 +43,16 @@ pub mod solana_uniswap_v2 {
     ) -> Result<()> {
         ctx.accounts.withdraw_liquidity(amount, &ctx.bumps)
     }
+    
+    pub fn swap(
+        ctx: Context<Swap>,
+        swap_a: bool,
+        input_amount: u64,
+        min_result_amount: u64,
+    ) -> Result<()> {
+        ctx.accounts
+            .swap(swap_a, input_amount, min_result_amount, &ctx.bumps)
+    }
 }
 
 #[derive(Accounts)]

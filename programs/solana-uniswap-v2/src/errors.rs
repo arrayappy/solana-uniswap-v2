@@ -10,4 +10,7 @@ pub enum CustomError {
 
     #[msg("Deposit amount is below the minimum required liquidity")]
     InsufficientDepositAmount,
+
+    #[msg("Result is below the minimum expected")]
+    SwapResultUnderflow,
 }
