@@ -29,9 +29,9 @@ impl<'info> WithdrawLiquidity<'info> {
         let amount_a = I64F64::from_num(amount)
             .checked_mul(I64F64::from_num(self.pool_account_a.amount))
             .unwrap()
-            .checked_div(I64F64::from_num(self.mint_liquidity.supply)) // Removed MIN_LIQUIDITY
+            .checked_div(I64F64::from_num(self.mint_liquidity.supply + MIN_LIQUIDITY))
             .unwrap()
-            .ceil()
+            .floor()
             .to_num::<u64>();
         token::transfer(
             CpiContext::new_with_signer(
@@ -50,7 +50,7 @@ impl<'info> WithdrawLiquidity<'info> {
         let amount_b = I64F64::from_num(amount)
             .checked_mul(I64F64::from_num(self.pool_account_b.amount))
             .unwrap()
-            .checked_div(I64F64::from_num(self.mint_liquidity.supply - MIN_LIQUIDITY)) // Subtracted instead of added MIN_LIQUIDITY
+            .checked_div(I64F64::from_num(self.mint_liquidity.supply + MIN_LIQUIDITY))
             .unwrap()
             .floor()
             .to_num::<u64>();
