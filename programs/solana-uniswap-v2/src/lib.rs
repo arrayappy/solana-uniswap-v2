@@ -13,12 +13,18 @@ declare_id!("uni89rwTPZo2AV5jWCv5Jx4GNDWAqc54BePQKcttmUa");
 pub mod solana_uniswap_v2 {
     use super::*;
 
-    pub fn initialize_amm(ctx: Context<InitializeAmm>, id: Pubkey, fee: u16) -> Result<()> {
+    pub fn initialize_amm(
+        ctx: Context<InitializeAmm>, 
+        id: Pubkey,
+        fee: u16
+    ) -> Result<()> {
         ctx.accounts.initialize_amm(id, fee)?;
         Ok(())
     }
 
-    pub fn initialize_pool(ctx: Context<InitializePool>) -> Result<()> {
+    pub fn initialize_pool(
+        ctx: Context<InitializePool>
+    ) -> Result<()> {
         ctx.accounts.initialize_pool()
     }
 
@@ -29,6 +35,13 @@ pub mod solana_uniswap_v2 {
     ) -> Result<()> {
         ctx.accounts
             .deposit_liquidity(amount_a, amount_b, &ctx.bumps)
+    }
+
+    pub fn withdraw_liquidity(
+        ctx: Context<WithdrawLiquidity>,
+        amount: u64
+    ) -> Result<()> {
+        ctx.accounts.withdraw_liquidity(amount, &ctx.bumps)
     }
 }
 
