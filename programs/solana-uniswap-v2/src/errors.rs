@@ -13,4 +13,7 @@ pub enum CustomError {
 
     #[msg("Result is below the minimum expected")]
     SwapResultUnderflow,
+
+    #[msg("Invariant check failed")]
+    InvariantError,
 }

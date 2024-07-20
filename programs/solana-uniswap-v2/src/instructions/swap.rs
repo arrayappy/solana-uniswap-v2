@@ -136,6 +136,9 @@ impl<'info> Swap<'info> {
         // Reload accounts because of the CPIs
         self.pool_account_a.reload()?;
         self.pool_account_b.reload()?;
+        if invariant > self.pool_account_a.amount * self.pool_account_a.amount {
+            return err!(CustomError::InvariantError);
+        }
 
         Ok(())
     }
