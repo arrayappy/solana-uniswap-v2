@@ -62,16 +62,6 @@ describe("Withdraw liquidity", () => {
   });
 
   it("Withdraw everything", async () => {
-    const liquidityTokenAccount = await connection.getTokenAccountBalance(
-      values.liquidityAccount
-    );
-    const depositTokenAccountA = await connection.getTokenAccountBalance(
-      values.holderAccountA
-    );
-    const depositTokenAccountB = await connection.getTokenAccountBalance(
-      values.holderAccountB
-    );
-
     await program.methods
       .withdrawLiquidity(values.depositAmountA.sub(values.minimumLiquidity))
       .accounts({
@@ -91,6 +81,15 @@ describe("Withdraw liquidity", () => {
       .signers([values.admin])
       .rpc({ skipPreflight: true });
 
+    const liquidityTokenAccount = await connection.getTokenAccountBalance(
+      values.liquidityAccount
+    );
+    const depositTokenAccountA = await connection.getTokenAccountBalance(
+      values.holderAccountA
+    );
+    const depositTokenAccountB = await connection.getTokenAccountBalance(
+      values.holderAccountB
+    );
     expect(liquidityTokenAccount.value.amount).to.equal("0");
     expect(Number(depositTokenAccountA.value.amount)).to.be.lessThan(
       values.defaultSupply.toNumber()
